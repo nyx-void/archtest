@@ -21,11 +21,11 @@ timedatectl set-timezone America/New_York
 
 echo "Partitioning the disk..."
 
- parted /dev/sda mklabel msdos
+parted /dev/sda mklabel msdos
 
- parted /dev/sda mkpart primary ext4 1MiB 100%
+parted /dev/sda mkpart primary ext4 1MiB 100%
 
- parted /dev/sda set 1 boot on
+parted /dev/sda set 1 boot on
 
 
 # Format the partition
@@ -56,11 +56,13 @@ echo "Generating the fstab file..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
 
-# Chroot into the new system
+# Create a new script to run inside the chroot environment
 
-echo "Chrooting into the new system..."
+echo "Creating a new script to run inside the chroot environment..."
 
-arch-chroot /mnt /bin/bash
+cat > /mnt/chroot_script.sh <<EOF
+
+#!/bin/bash
 
 
 # Set the root password
@@ -102,6 +104,22 @@ grub-mkconfig -o /boot/grub/grub.cfg
 echo "Exiting the chroot environment..."
 
 exit
+
+EOF
+
+
+# Make the new script executable
+
+echo "Making the new script executable..."
+
+chmod +x /mnt/chroot_script.sh
+
+
+# Chroot into the new system and run the new script
+
+echo "Chrooting into the new system and running the new script..."
+
+arch-chroot /mnt /bin/bash -c "/chroot_script.sh"
 
 
 # Reboot the system
