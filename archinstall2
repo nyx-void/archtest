@@ -1,0 +1,93 @@
+#!/bin/bash
+
+
+# Set variables
+
+DEVICE=/dev/sda
+
+MOUNTPOINT=/mnt
+
+BOOTLOADER=grub
+
+
+# Partition and format the device
+
+fdisk $DEVICE << EOF
+
+n
+
+p
+
+1
+
+2048
+
++512M
+
+t
+
+1
+
+n
+
+p
+
+2
+
+2048
+
++512M
+
+t
+
+2
+
+w
+
+EOF
+
+
+mkfs.ext4 ${DEVICE}1
+
+mkfs.ext4 ${DEVICE}2
+
+
+# Mount filesystems
+
+mount ${DEVICE}1 $MOUNTPOINT
+
+mkdir $MOUNTPOINT/boot
+
+mount ${DEVICE}2 $MOUNTPOINT/boot
+
+
+# Base installation
+
+pacstrap $MOUNTPOINT base base-devel
+
+
+# Kernel installation
+
+pacman -S linux linux-firmware
+
+
+# Bootloader installation
+
+grub-install --target=x86_64-efi --efi-directory=$MOUNTPOINT/boot --bootloader-id=GRUB
+
+
+# Network configuration
+
+netctl enable dhcp
+
+
+# User creation
+
+useradd -m -s /bin/bash void
+
+echo "void:main" | chpasswd
+
+
+# Package installation
+
+pacman -S vim git
