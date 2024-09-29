@@ -1,0 +1,111 @@
+#!/bin/bash
+
+
+# Set the language and keyboard layout
+
+echo "Setting language and keyboard layout..."
+
+loadkeys us
+
+setfont lat9w-16
+
+
+# Set the timezone
+
+echo "Setting timezone..."
+
+timedatectl set-timezone America/New_York
+
+
+# Partition the disk
+
+echo "Partitioning the disk..."
+
+ parted /dev/sda mklabel msdos
+
+ parted /dev/sda mkpart primary ext4 1MiB 100%
+
+ parted /dev/sda set 1 boot on
+
+
+# Format the partition
+
+echo "Formatting the partition..."
+
+mkfs.ext4 /dev/sda1
+
+
+# Mount the partition
+
+echo "Mounting the partition..."
+
+mount /dev/sda1 /mnt
+
+
+# Install the base system
+
+echo "Installing the base system..."
+
+pacstrap /mnt base
+
+
+# Generate the fstab file
+
+echo "Generating the fstab file..."
+
+genfstab -U /mnt >> /mnt/etc/fstab
+
+
+# Chroot into the new system
+
+echo "Chrooting into the new system..."
+
+arch-chroot /mnt /bin/bash
+
+
+# Set the root password
+
+echo "Setting the root password..."
+
+passwd
+
+
+# Configure the network
+
+echo "Configuring the network..."
+
+ip link
+
+ip addr add 192.168.1.100/24 brd 192.168.1.255 dev enp0s3
+
+ip link set enp0s3 up
+
+
+# Install additional packages
+
+echo "Installing additional packages..."
+
+pacman -S grub networkmanager
+
+
+# Configure the bootloader
+
+echo "Configuring the bootloader..."
+
+grub-install --target=i386-pc /dev/sda
+
+grub-mkconfig -o /boot/grub/grub.cfg
+
+
+# Exit the chroot environment
+
+echo "Exiting the chroot environment..."
+
+exit
+
+
+# Reboot the system
+
+echo "Rebooting the system..."
+
+reboot
